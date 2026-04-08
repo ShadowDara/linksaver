@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/shadowdara/finder/pub/goansi"
 )
 
 type Link struct {
@@ -169,10 +171,11 @@ func viewLinks(config AppConfig) {
 }
 
 func listLinks(config AppConfig) {
+	fmt.Printf("\n%sCredits:%s\n\n", goansi.GREEN, goansi.END)
+
 	for _, l := range config.Links {
-		fmt.Println("\nCredits:\n")
-		fmt.Printf("\"%s\" (%s) by %s is licensed under %s (%s)\n\n",
-			l.Name, l.Link, l.Author, l.License, l.LicenseLink)
+		fmt.Printf("\"%s%s%s\" (%s) by %s%s%s is licensed under %s%s%s (%s)\n\n",
+			goansi.CYAN, l.Name, goansi.END, l.Link, goansi.YELLOW, l.Author, goansi.END, goansi.RED, l.License, goansi.END, l.LicenseLink)
 	}
 }
 
