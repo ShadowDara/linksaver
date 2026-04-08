@@ -170,7 +170,7 @@ func viewLinks(config AppConfig) {
 
 func listLinks(config AppConfig) {
 	for _, l := range config.Links {
-		fmt.Printf("\"%s\" (%s) by %s is licensed under %s (%s)\n",
+		fmt.Printf("\"%s\" (%s) by %s is licensed under %s (%s)\n\n",
 			l.Name, l.Link, l.Author, l.License, l.LicenseLink)
 	}
 }
