@@ -27,9 +27,10 @@ type Link struct {
 }
 
 type AppConfig struct {
-	ProjectName string `json:"projectname"`
-	Pretty      bool   `json:"pretty"`
-	Links       []Link `json:"links"`
+	ProjectName string   `json:"projectname"`
+	Pretty      bool     `json:"pretty"`
+	Links       []Link   `json:"links"`
+	Links2      []string `json:"links2"`
 }
 
 var baseDir, _ = os.Getwd()
@@ -42,6 +43,7 @@ func newAppConfig(name string) AppConfig {
 		ProjectName: name,
 		Pretty:      true,
 		Links:       []Link{},
+		Links2:      []string{},
 	}
 }
 
@@ -150,6 +152,20 @@ func addLink(config *AppConfig) {
 	fmt.Println("Added new link!")
 }
 
+func add2Link(config *AppConfig) {
+	entry := prompt("Entry text: ")
+
+	config.Links2 = append(config.Links2, entry)
+
+	err := saveConfig(*config)
+	if err != nil {
+		fmt.Println("Error saving:", err)
+		return
+	}
+
+	fmt.Println("Added new entry!")
+}
+
 func viewLinks(config AppConfig) {
 	for _, l := range config.Links {
 		fmt.Printf("[%s] ", l.Link)
@@ -197,6 +213,12 @@ func listLinks(config AppConfig) {
 
 		fmt.Printf("\n\n")
 	}
+
+	if len(config.Links2) > 0 {
+		for _, entry := range config.Links2 {
+			fmt.Printf("%s\n\n", entry)
+		}
+	}
 }
 
 func openLink(url string) {
@@ -232,6 +254,7 @@ Commands:
     help    show this message
     init    create config
     add     add link
+    add2    add entry (text only)
     view    view links
     list    list links
     (none)  open all links
@@ -266,6 +289,9 @@ func main() {
 		switch args[0] {
 		case "add":
 			addLink(&config)
+			return
+		case "add2":
+			add2Link(&config)
 			return
 		case "view":
 			viewLinks(config)
