@@ -22,6 +22,8 @@ type Link struct {
 	License     string `json:"license,omitempty"`
 	Author      string `json:"author,omitempty"`
 	LicenseLink string `json:"licenselink,omitempty"`
+	ShowInList  bool   `json:"showinlist"`
+	ChangeNotice bool  `json:"changenotice"`
 }
 
 type AppConfig struct {
@@ -123,14 +125,18 @@ func addLink(config *AppConfig) {
 	author := prompt("Author (optional): ")
 	license := prompt("License (optional): ")
 	licenseLink := prompt("License Link (optional): ")
+	showInList := prompt("Show in list? (y/n, default y): ")
+	changeNotice := prompt("Mark as changed? (y/n, default n): ")
 
 	newLink := Link{
-		Name:        name,
-		Link:        link,
-		Description: desc,
-		Author:      author,
-		License:     license,
-		LicenseLink: licenseLink,
+		Name:         name,
+		Link:         link,
+		Description:  desc,
+		Author:       author,
+		License:      license,
+		LicenseLink:  licenseLink,
+		ShowInList:   showInList != "n",
+		ChangeNotice: changeNotice == "y",
 	}
 
 	config.Links = append(config.Links, newLink)
@@ -166,6 +172,10 @@ func viewLinks(config AppConfig) {
 			fmt.Printf("License URL: %s", l.LicenseLink)
 		}
 
+		if l.ChangeNotice {
+			fmt.Printf(" (changes were made)")
+		}
+
 		fmt.Println()
 	}
 }
@@ -174,8 +184,18 @@ func listLinks(config AppConfig) {
 	fmt.Printf("\n%sCredits:%s\n\n", goansi.GREEN, goansi.END)
 
 	for _, l := range config.Links {
-		fmt.Printf("\"%s%s%s\" (%s) by %s%s%s is licensed under %s%s%s (%s)\n\n",
+		if !l.ShowInList {
+			continue
+		}
+
+		fmt.Printf("\"%s%s%s\" (%s) by %s%s%s is licensed under %s%s%s (%s)",
 			goansi.CYAN, l.Name, goansi.END, l.Link, goansi.YELLOW, l.Author, goansi.END, goansi.RED, l.License, goansi.END, l.LicenseLink)
+
+		if l.ChangeNotice {
+			fmt.Printf(" (changes were made)")
+		}
+
+		fmt.Printf("\n\n")
 	}
 }
 
