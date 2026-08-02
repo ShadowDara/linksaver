@@ -1,0 +1,121 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Get version
+        id: vars
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+
+          BINARY_NAME=linksaver
+          VERSION=${{ steps.vars.outputs.VERSION }}
+
+          if [ "$GOOS" = "windows" ]; then
+            EXT=".exe"
+          else
+            EXT=""
+          fi
+
+          OUTPUT="${BINARY_NAME}_${VERSION}_${GOOS}_${GOARCH}"
+          PACKAGE_DIR="dist/${OUTPUT}"
+
+          mkdir -p "${PACKAGE_DIR}"
+
+          go build \
+            -o "${PACKAGE_DIR}/${BINARY_NAME}${EXT}" \
+            -ldflags="-s -w .
+
+          # add Changelog and Info about the program
+          cp CHANGELOG.md "${PACKAGE_DIR}/"
+          cp INFO.txt "${PACKAGE_DIR}/"
+          cp LICENSE "${PACKAGE_DIR}/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create release archives per system
+        run: |
+          mkdir -p release
+
+          # Jeder Artifact-Ordner enthält die jeweiligen dist-Unterordner
+          for dir in dist/build-*; do
+            find "$dir" -mindepth 1 -maxdepth 1 -type d | while read package_dir; do
+
+              BASENAME=$(basename "$package_dir")
+
+              if ls "$package_dir"/*.exe 1> /dev/null 2>&1; then
+                cd "$package_dir"
+                zip -r "../../../release/${BASENAME}.zip" .
+                cd - > /dev/null
+              else
+                tar -czf "release/${BASENAME}.tar.gz" -C "$package_dir" .
+              fi
+
+            done
+          done
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+
+          awk "/^## ${VERSION}/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md > RELEASE_NOTES.md
+
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_OUTPUT
+          cat RELEASE_NOTES.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          files: release/*
+          body: ${{ steps.changelog.outputs.RELEASE_BODY }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

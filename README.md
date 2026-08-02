@@ -1,5 +1,7 @@
 # linksaver
 
+**Moved back to go because of better types!**
+
 A command-line tool for saving and managing links with metadata.
 
 ## Features
