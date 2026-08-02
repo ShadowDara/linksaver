@@ -51,12 +51,12 @@ jobs:
 
           go build \
             -o "${PACKAGE_DIR}/${BINARY_NAME}${EXT}" \
-            -ldflags="-s -w .
+            -ldflags="-s -w ."
 
           # add Changelog and Info about the program
-          cp CHANGELOG.md "${PACKAGE_DIR}/"
-          cp INFO.txt "${PACKAGE_DIR}/"
-          cp LICENSE "${PACKAGE_DIR}/"
+          #cp CHANGELOG.md "${PACKAGE_DIR}/"
+          #cp INFO.txt "${PACKAGE_DIR}/"
+          #cp LICENSE "${PACKAGE_DIR}/"
 
       - uses: actions/upload-artifact@v4
         with:
