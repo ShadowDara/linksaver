@@ -1,4 +1,4 @@
-module github.com/shadowdara/linksaver
+module github.com/shadowdara/linksaver/v3
 
 go 1.18
 
